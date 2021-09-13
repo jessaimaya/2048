@@ -43,7 +43,8 @@ version = "0.3.48"
 # Add more web-sys API's as you need them
 features = [
   "HtmlInputElement",
-  "HashChangeEvent"
+  "HashChangeEvent",
+  "KeyboardEvent",
 ]
 
 [dev-dependencies]

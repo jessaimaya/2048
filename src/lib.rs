@@ -1,13 +1,16 @@
-use game::*;
-use log::info;
 use log::Level;
 use mogwai::prelude::*;
-use std::default;
 use std::panic;
 use wasm_bindgen::prelude::*;
+use web_sys::KeyboardEvent;
 
 mod components;
 mod game;
+
+use components::*;
+
+use crate::AppModelIn::KeyUp;
+use game::Grid;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -15,47 +18,81 @@ mod game;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-type Grid = [[u8; 4]; 4];
-
 #[derive(Debug)]
 struct App {
-    grid: Grid,
+    pub grid: Vec<Grid>,
 }
 
 #[derive(Clone)]
-enum AppModel {}
+enum AppModelIn {
+    KeyUp(Option<Event>),
+    _Restart,
+    _Undo,
+}
 
 #[derive(Clone)]
-enum AppView {}
+enum AppViewOut {
+    Moved(Grid),
+}
 
 impl Default for App {
     fn default() -> Self {
-        let mut grid: Grid = [[0; 4]; 4];
-        game::add_random_2(&mut grid);
-        App { grid }
+        let mut grid: Grid = Grid { data: [[0; 4]; 4] };
+        grid.add_random_2();
+        App { grid: vec![grid] }
     }
 }
 
 impl Component for App {
+    type ModelMsg = AppModelIn;
+    type ViewMsg = AppViewOut;
     type DomNode = HtmlElement;
-    type ModelMsg = AppModel;
-    type ViewMsg = AppView;
 
-    fn update(&mut self, _msg: &AppModel, _tx: &Transmitter<AppView>, _sub: &Subscriber<AppModel>) {
-        /*match msg {
-
-        }*/
+    fn update(
+        &mut self,
+        msg: &AppModelIn,
+        tx: &Transmitter<AppViewOut>,
+        _sub: &Subscriber<AppModelIn>,
+    ) {
+        match msg {
+            KeyUp(evt) => {
+                let key = evt
+                    .as_ref()
+                    .expect("No KeyboardEvent")
+                    .unchecked_ref::<KeyboardEvent>()
+                    .key();
+                let mut last: Grid = *self.grid.last().expect("App's grid empty");
+                let mut is_direction = true;
+                match key.as_ref() {
+                    "ArrowUp" => last.move_up(),
+                    "ArrowDown" => last.move_down(),
+                    "ArrowLeft" => last.move_left(),
+                    "ArrowRight" => last.move_right(),
+                    _ => is_direction = false,
+                }
+                if is_direction {
+                    last.add_random_2();
+                    self.grid.push(last);
+                    tx.send(&AppViewOut::Moved(last));
+                }
+            }
+            Restart => (),
+            Undo => (),
+            _ => (),
+        }
     }
 
     fn view(
         &self,
-        _tx: &Transmitter<AppModel>,
-        _rx: &Receiver<AppView>,
+        tx: &Transmitter<AppModelIn>,
+        rx: &Receiver<AppViewOut>,
     ) -> ViewBuilder<HtmlElement> {
         builder!(
-            <div class="App">
+            <div class="App" document:keyup=tx.contra_map(|ev: &Event| AppModelIn::KeyUp(Some(ev.clone())))>
                 <main>
-                    <p>"Main content"</p>
+                    <div patch:children=rx.branch_map(move |AppViewOut::Moved(grid)|
+                    Patch::Replace{value: grid::grid_view(grid)
+                    , index: 0})>{grid::grid_view(self.grid.last().expect("App grid data empty"))}</div>
                 </main>
             </div>
         )
@@ -68,7 +105,6 @@ pub fn main() -> Result<(), JsValue> {
     console_log::init_with_level(Level::Trace).unwrap();
 
     let gizmo = Gizmo::from(App::default());
-    info!("Initial app: {:?}", gizmo.state);
     let view = View::from(gizmo.view_builder());
     view.run()
 }
