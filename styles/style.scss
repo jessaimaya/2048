@@ -1,0 +1,196 @@
+@use "sass:color";
+/*
+*
+* Sanitize
+*
+*/
+@import url(~sanitize.css);
+
+/*
+*
+* Theme
+*
+*/
+
+$font: 'Roboto', sans-serif;
+
+$dark-theme: "dark-theme";
+$light-theme: "light-theme";
+
+$primary-accent: "primary-accent";
+$light: "light";
+
+$card-2: "card-2";
+$card-4: "card-4";
+$card-8: "card-8";
+$card-16: "card-16";
+$card-32: "card-32";
+$card-64: "card-64";
+$card-128: "card-128";
+$card-256: "card-256";
+$card-512: "card-512";
+$card-1024: "card-1024";
+$card-2048: "card-2048";
+
+$base_card: #C4C6D1;
+
+$tile_size: 67.5px;
+$tile_gap: 10px;
+
+$themes: (
+	$light-theme: (
+		$primary-accent: #5C6CB1,
+		$light: #FDFDFD,
+		$card-2: $base_card,
+	),
+	$dark-theme: (
+		$base_card: #C4C6D1,
+		$primary-accent: #27346C,
+		$light: #E0E0E0,
+		$card-2: darken($base_card, 0),
+		$card-4: darken($base_card, 10%),
+		$card-8: darken($base_card, 15%),
+		$card-16: darken($base_card, 20%),
+		$card-32: darken($base_card, 30%),
+		$card-64: darken($base_card, 40%),
+		$card-128: darken($base_card, 50%),
+		$card-256: darken($base_card, 60%),
+		$card-512: darken($base_card, 70%),
+		$card-1024: darken($base_card, 80%),
+		$card-2048: darken($base_card, 90%),
+	)
+);
+
+@mixin themeProperty($theme, $property, $color, $additionalPropertiesPositionIsFront, $additionalProperties) {
+  @if $additionalPropertiesPositionIsFront {
+    #{$property}: unquote($additionalProperties + ' ' + map-get($theme, $color));
+  } @else {
+    #{$property}: unquote(map-get($theme, $color) + ' ' + $additionalProperties);
+  }
+}
+
+@mixin theme($property, $color, $additionalPropertiesPositionIsFront: false, $additionalProperties: '') {
+  $light: map-get($themes, $light-theme);
+  $dark: map-get($themes, $dark-theme);
+
+  @include themeProperty($light, $property, $color, $additionalPropertiesPositionIsFront, $additionalProperties);
+
+  @media (prefers-color-scheme: dark) {
+    @include themeProperty($dark, $property, $color, $additionalPropertiesPositionIsFront, $additionalProperties);
+  }
+}
+
+
+html, body {
+	 @include theme('background-color', $primary-accent);
+     font-family: $font;
+}
+
+.App {
+	display:flex;
+	height: 100vh;
+	overflow: hidden;
+	width: 100%;
+	flex-direction: column;
+	justify-content: center;
+	align-content: center;
+}
+
+.content {
+    height: 100%;
+    width: 100%;
+}
+
+.wrapper {
+	display: flex;
+	align-self: center;
+	position: relative;
+	width: 320px;
+	height: 320px;
+}
+
+.tiles {
+	position: absolute;
+}
+
+.board {
+	width: 320px;
+	height: 320px;
+	position: relative;
+	display: grid;
+	padding: 10px;
+	align-self: center;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	grid-template-rows: 1fr 1fr 1fr 1fr;
+	grid-gap: 10px;
+	border-radius: 1rem;
+	@include theme('background-color', $light);
+	-webkit-box-shadow: inset 5px 5px 6px 1px rgba(0,0,0,0.17); 
+	box-shadow: inset 5px 5px 6px 1px rgba(0,0,0,0.17);	
+}
+.tile {
+	@include theme('background-color', $light);
+	border: solid 2px #D3D3D3;
+	border-radius: 1rem;
+	-webkit-box-shadow: inset 3px 3px 2px 1px rgba(0,0,0,0.1); 
+	box-shadow: inset 3px 3px 2px 1px rgba(0,0,0,0.1);
+}
+.card {
+	width: $tile_size;
+	height: $tile_size;
+	position: absolute;
+	font-weight: bold;
+	display: flex;
+	font-size: 3rem;
+	flex-direction: column;
+	justify-content: center;
+	align-content: center;
+	text-align: center;
+	border-radius: 1rem;
+	@include theme('color', $light);
+	-webkit-box-shadow: 5px 5px 6px 1px rgba(0,0,0,0.19); 
+	box-shadow: 5px 5px 6px 1px rgba(0,0,0,0.19);
+	-webkit-transition: 100ms ease-in-out 100ms;
+	-moz-transition: 100ms ease-in-out 100ms;
+	transition: 100ms ease-in-out 100ms;
+	-webkit-transition-property: -webkit-transform;
+	-moz-transition-property: -moz-transform;
+	transition-property: transform;
+	&__2{@include theme('background-color', $card-2);}
+	&__4{@include theme('background-color', $card-4);}
+	&__8{@include theme('background-color', $card-8);}
+	&__16{@include theme('background-color', $card-16);}
+	&__32{@include theme('background-color', $card-32);}
+	&__64{@include theme('background-color', $card-64);}
+	&__128{@include theme('background-color', $card-128);}
+	&__256{@include theme('background-color', $card-256);}
+	&__512{@include theme('background-color', $card-512);}
+	&__1024{@include theme('background-color', $card-1024);}
+	&__2048{@include theme('background-color', $card-2048);}
+	&.small {
+		font-size:1.8rem;
+	}
+    &.medium{
+		font-size:2.5rem;
+	}
+}
+span {
+	display: none;
+}
+
+
+@for $i from 0 through 4 {
+	@for $j from 0 through 4 {
+		.position__#{$i}_#{$j} {
+			z-index: 1;
+            transition-delay: 150ms;
+			-webkit-transform: translate(($tile_gap * $j) + ($tile_size * $j) + $tile_gap, ($tile_gap * $i) + ($tile_size * $i) + $tile_gap);
+			-moz-transform: translate(($tile_gap * $j) + ($tile_size * $j) + $tile_gap, ($tile_gap * $i) + ($tile_size * $i) + $tile_gap);
+			-ms-transform: translate(($tile_gap * $j) + ($tile_size * $j) + $tile_gap, ($tile_gap * $i) + ($tile_size * $i) + $tile_gap);
+			transform: translate(($tile_gap * $j) + ($tile_size * $j) + $tile_gap, ($tile_gap * $i) + ($tile_size * $i) + $tile_gap);
+		}
+	}
+}
+
+
+@import "home.scss";

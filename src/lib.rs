@@ -1,16 +1,17 @@
+use log::info;
 use log::Level;
 use mogwai::prelude::*;
 use std::panic;
 use wasm_bindgen::prelude::*;
-use web_sys::KeyboardEvent;
+use web_sys::HashChangeEvent;
 
 mod components;
-mod game;
+mod containers;
+mod router;
 
-use components::*;
-
-use crate::AppModelIn::KeyUp;
-use game::Grid;
+use crate::router::Route;
+use components::grid::*;
+use containers::home::Home;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -18,84 +19,97 @@ use game::Grid;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[derive(Debug)]
 struct App {
-    pub grid: Vec<Grid>,
-}
-
-#[derive(Clone)]
-enum AppModelIn {
-    KeyUp(Option<Event>),
-    _Restart,
-    _Undo,
-}
-
-#[derive(Clone)]
-enum AppViewOut {
-    Moved(Grid),
+    route: Route,
 }
 
 impl Default for App {
     fn default() -> Self {
-        let mut grid: Grid = Grid { data: [[0; 4]; 4] };
-        grid.add_random_2();
-        App { grid: vec![grid] }
+        App { route: Route::Home }
+    }
+}
+
+#[derive(Clone)]
+enum AppModel {
+    HashChange(String),
+}
+
+#[derive(Clone)]
+enum AppView {
+    PatchPage(Patch<View<HtmlElement>>),
+    Error(String),
+}
+
+impl AppView {
+    fn error(&self) -> Option<String> {
+        match self {
+            AppView::Error(msg) => Some(msg.clone()),
+            _ => None,
+        }
+    }
+
+    /// If the message is a new route, convert it into a patch to replace the current main page.
+    fn patch_page(&self) -> Option<Patch<View<HtmlElement>>> {
+        match self {
+            AppView::PatchPage(patch) => Some(patch.clone()),
+            _ => None,
+        }
     }
 }
 
 impl Component for App {
-    type ModelMsg = AppModelIn;
-    type ViewMsg = AppViewOut;
+    type ModelMsg = AppModel;
+    type ViewMsg = AppView;
     type DomNode = HtmlElement;
 
-    fn update(
-        &mut self,
-        msg: &AppModelIn,
-        tx: &Transmitter<AppViewOut>,
-        _sub: &Subscriber<AppModelIn>,
-    ) {
+    fn update(&mut self, msg: &AppModel, tx: &Transmitter<AppView>, _sub: &Subscriber<AppModel>) {
         match msg {
-            KeyUp(evt) => {
-                let key = evt
-                    .as_ref()
-                    .expect("No KeyboardEvent")
-                    .unchecked_ref::<KeyboardEvent>()
-                    .key();
-                let mut last: Grid = *self.grid.last().expect("App's grid empty");
-                let mut is_direction = true;
-                match key.as_ref() {
-                    "ArrowUp" => last.move_up(),
-                    "ArrowDown" => last.move_down(),
-                    "ArrowLeft" => last.move_left(),
-                    "ArrowRight" => last.move_right(),
-                    _ => is_direction = false,
-                }
-                if is_direction {
-                    last.add_random_2();
-                    self.grid.push(last);
-                    tx.send(&AppViewOut::Moved(last));
+            AppModel::HashChange(hash) => {
+                // When we get a hash change, attempt to convert it into one of our routes
+                match Route::try_from(hash.as_str()) {
+                    // If we can't, let's send an error message to the view
+                    Err(msg) => tx.send(&AppView::Error(msg)),
+                    // If we _can_, create a new view from the route and send a patch message to
+                    // the view
+                    Ok(route) => {
+                        if route != self.route {
+                            let view = View::from(ViewBuilder::from(&route));
+                            self.route = route;
+                            tx.send(&AppView::PatchPage(Patch::Replace {
+                                index: 2,
+                                value: view,
+                            }));
+                        }
+                    }
                 }
             }
-            Restart => (),
-            Undo => (),
-            _ => (),
         }
     }
 
-    fn view(
-        &self,
-        tx: &Transmitter<AppModelIn>,
-        rx: &Receiver<AppViewOut>,
-    ) -> ViewBuilder<HtmlElement> {
-        builder!(
-            <div class="App" document:keyup=tx.contra_map(|ev: &Event| AppModelIn::KeyUp(Some(ev.clone())))>
-                <main>
-                    <div patch:children=rx.branch_map(move |AppViewOut::Moved(grid)|
-                    Patch::Replace{value: grid::grid_view(grid)
-                    , index: 0})>{grid::grid_view(self.grid.last().expect("App grid data empty"))}</div>
-                </main>
-            </div>
-        )
+    fn view(&self, tx: &Transmitter<AppModel>, rx: &Receiver<AppView>) -> ViewBuilder<HtmlElement> {
+        builder! {
+            <slot
+                class="App"
+                window:hashchange=tx.contra_filter_map(|ev:&Event| {
+                    let hev = ev.dyn_ref::<HashChangeEvent>().unwrap().clone();
+                    let hash = hev.new_url();
+                    Some(AppModel::HashChange(hash))
+                })
+                patch:children=rx.branch_filter_map(AppView::patch_page)>
+                <nav>
+                    <ul>
+                        <li class=self.route.nav_home_class()>
+                            <a href=String::from(Route::Home)>"Home"</a>
+                        </li>
+                        <li class=self.route.nav_play_class()>
+                            <a href=String::from(Route::Play)>"Play"</a>
+                        </li>
+                    </ul>
+                </nav>
+                <pre>{rx.branch_filter_map(AppView::error)}</pre>
+                {ViewBuilder::from(&self.route)}
+            </slot>
+        }
     }
 }
 
