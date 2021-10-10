@@ -61,7 +61,10 @@ impl From<&Route> for ViewBuilder<HtmlElement> {
     fn from(route: &Route) -> Self {
         match route {
             Route::Home => {
-                let home_component = Gizmo::from(Home { num_clicks: 1, ctx: None });
+                let home_component = Gizmo::from(Home {
+                    num_clicks: 1,
+                    ctx: None,
+                });
 
                 builder! {
                     <main class="content">

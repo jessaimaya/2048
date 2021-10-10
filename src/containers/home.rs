@@ -1,6 +1,5 @@
-
 use log::info;
-use wasm_bindgen::{JsValue,JsCast, closure};
+use wasm_bindgen::{closure, JsCast, JsValue};
 
 use mogwai::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
@@ -33,13 +32,15 @@ impl Component for Home {
             In::Click => {
                 self.num_clicks += 1;
                 tx_view.send(&Out::DrawClicks(self.num_clicks));
-            },
+            }
             In::CanvasIn(canvas) => {
                 info!("Canvas here!");
-                let canvas = canvas.to_owned()
+                let canvas = canvas
+                    .to_owned()
                     .dyn_into::<web_sys::HtmlCanvasElement>()
                     .unwrap();
-                let context =  canvas.get_context("2d")
+                let context = canvas
+                    .get_context("2d")
                     .unwrap()
                     .unwrap()
                     .dyn_into::<web_sys::CanvasRenderingContext2d>()
@@ -53,23 +54,43 @@ impl Component for Home {
                 //self.ctx.unwrap().canvas().unwrap().set_height(c_h as u32);
                 //context.set_fill_style(&JsValue::from("red"));
                 //context.fill_rect(0.0, 0.0, c_w as f64, c_h as f64);
-                let mut lava0 = LavaLamp::new((c_w/1) as f32, (c_h/1) as f32, 10, String::from("#5d3a97"), String::from("#8942a4"), self.ctx.to_owned());
+                let mut lava0 = LavaLamp::new(
+                    (c_w / 1) as f32,
+                    (c_h / 1) as f32,
+                    10,
+                    String::from("#5d3a97"),
+                    String::from("#8942a4"),
+                    self.ctx.to_owned(),
+                );
 
-                let mut lava1 = LavaLamp::new((c_w/1) as f32, (c_h/1) as f32, 10, String::from("#24519f"), String::from("#fa0000"), self.ctx.to_owned());
-                let mut lava2 = LavaLamp::new(c_w as f32, c_h as f32, 10, String::from("#60bfbd"), String::from("#1c4995"), self.ctx.to_owned());
-
+                let mut lava1 = LavaLamp::new(
+                    (c_w / 1) as f32,
+                    (c_h / 1) as f32,
+                    10,
+                    String::from("#24519f"),
+                    String::from("#fa0000"),
+                    self.ctx.to_owned(),
+                );
+                let mut lava2 = LavaLamp::new(
+                    c_w as f32,
+                    c_h as f32,
+                    10,
+                    String::from("#60bfbd"),
+                    String::from("#1c4995"),
+                    self.ctx.to_owned(),
+                );
 
                 //lava0.render_metaball();
                 //lava1.render_metaball();
                 // lava2.render_metaball();
-                request_animation_frame( move|_t| {
+                request_animation_frame(move |_t| {
                     context.clear_rect(0.0, 0.0, c_w as f64, c_h as f64);
                     lava0.render_metaball();
                     lava2.render_metaball();
                     lava1.render_metaball();
                     true
                 });
-            },
+            }
         }
     }
 
