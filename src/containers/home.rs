@@ -1,8 +1,10 @@
-use log::info;
 use wasm_bindgen::{closure, JsCast, JsValue};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use mogwai::prelude::*;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 use crate::components::metaball::*;
 
@@ -19,7 +21,7 @@ pub enum Out {
 
 pub struct Home {
     pub num_clicks: i32,
-    pub ctx: Option<CanvasRenderingContext2d>,
+    pub ctx: Rc<RefCell<Option<web_sys::CanvasRenderingContext2d>>>,
 }
 
 impl Component for Home {
@@ -34,7 +36,6 @@ impl Component for Home {
                 tx_view.send(&Out::DrawClicks(self.num_clicks));
             }
             In::CanvasIn(canvas) => {
-                info!("Canvas here!");
                 let canvas = canvas
                     .to_owned()
                     .dyn_into::<web_sys::HtmlCanvasElement>()
@@ -45,31 +46,27 @@ impl Component for Home {
                     .unwrap()
                     .dyn_into::<web_sys::CanvasRenderingContext2d>()
                     .unwrap();
-                self.ctx = Some(context.clone());
+                self.ctx = Rc::new(RefCell::new(Some(context.clone())));
+
                 let c_w = body().client_width();
                 let c_h = body().client_height();
-                info!("cw: {}, ch:{}", c_w, c_h);
 
-                //self.ctx.unwrap().canvas().unwrap().set_width(c_w as u32);
-                //self.ctx.unwrap().canvas().unwrap().set_height(c_h as u32);
-                //context.set_fill_style(&JsValue::from("red"));
-                //context.fill_rect(0.0, 0.0, c_w as f64, c_h as f64);
-                let mut lava0 = LavaLamp::new(
-                    (c_w / 1) as f32,
-                    (c_h / 1) as f32,
-                    10,
-                    String::from("#5d3a97"),
-                    String::from("#8942a4"),
-                    self.ctx.to_owned(),
-                );
+                // let mut lava0 = LavaLamp::new(
+                //     c_w as f32,
+                //     c_h as f32,
+                //     10,
+                //     String::from("#5d3a97"),
+                //     String::from("#8942a4"),
+                //     self.ctx.to_owned(),
+                // );
 
                 let mut lava1 = LavaLamp::new(
-                    (c_w / 1) as f32,
-                    (c_h / 1) as f32,
+                    c_w as f32,
+                    c_h as f32,
                     10,
                     String::from("#24519f"),
                     String::from("#fa0000"),
-                    self.ctx.to_owned(),
+                    self.ctx.borrow_mut().take(),
                 );
                 let mut lava2 = LavaLamp::new(
                     c_w as f32,
@@ -77,17 +74,14 @@ impl Component for Home {
                     10,
                     String::from("#60bfbd"),
                     String::from("#1c4995"),
-                    self.ctx.to_owned(),
-                );
+                    self.ctx.borrow_mut().take()
+                    );
 
-                //lava0.render_metaball();
-                //lava1.render_metaball();
-                // lava2.render_metaball();
                 request_animation_frame(move |_t| {
                     context.clear_rect(0.0, 0.0, c_w as f64, c_h as f64);
-                    lava0.render_metaball();
-                    lava2.render_metaball();
-                    lava1.render_metaball();
+                    //lava0.render_metaball();
+                     lava1.render_metaball();
+                     lava2.render_metaball();
                     true
                 });
             }
@@ -107,13 +101,15 @@ impl Component for Home {
                         class="lavalamp_canvas"
                         post:build = tx.contra_map(|canvas: &HtmlElement| In::CanvasIn(canvas.clone()))
                     />
-                    <div class="bubble main green">
+                </div>
+                <div 
+                    on:click=tx.contra_map(|_| In::Click)
+                    class="bubble main green"
+                >
                         <h1 class="buble__title">"2048"</h1>
                         <h2 class="bubble__subtitle">"mogwai"</h2>
-                    </div>
-                </div>
-                <div class="home__bottom">
-                    <button on:click=tx.contra_map(|_| In::Click)>
+                        <img src="./play.png" width = "" />
+                    <button >
                         {(
                             "clicks = 1",
                             rx.branch_map(|msg| {
@@ -125,7 +121,7 @@ impl Component for Home {
                             })
                         )}
                     </button>
-                </div>
+                    </div>
             </div>
         }
     }

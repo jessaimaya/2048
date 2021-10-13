@@ -1,9 +1,9 @@
-use log::info;
 use rand::prelude::*;
-use std::cmp;
 use std::ops::Add;
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasGradient, CanvasRenderingContext2d};
+
+const ERROR_MARGIN: f32 = f32::EPSILON;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LavaLamp {
@@ -39,7 +39,7 @@ impl LavaLamp {
         ctx: Option<CanvasRenderingContext2d>,
     ) -> Self {
         let ctx = ctx.unwrap();
-        let stp = 10.0;
+        let stp = 25.0;
         let cg = create_radial_gradient(w, h, c0.clone(), c1.clone(), &ctx);
         let sx = (w / stp).floor();
         let sy = (h / stp).floor();
@@ -86,7 +86,7 @@ impl LavaLamp {
             lamp.grid.push(point);
         }
 
-        for i in 0..nb {
+        for _i in 0..nb {
             let ball = Ball::new(w, h, wh);
             lamp.balls.push(ball);
         }
@@ -106,10 +106,10 @@ impl LavaLamp {
             };
             let mut i = 0;
             while i < self.balls.len() {
-                let den = (-2.0 * cell.x * self.balls[i].pos.x
+                let den = -2.0 * cell.x * self.balls[i].pos.x
                     - 2.0 * cell.y * self.balls[i].pos.y
                     + self.balls[i].pos.magnitude
-                    + cell.magnitude);
+                    + cell.magnitude;
 
                 force += ((self.balls[i].size * self.balls[i].size) / den) as f32;
 
@@ -129,13 +129,13 @@ impl LavaLamp {
     fn marching_squares(&mut self, x: f32, y: f32, p_dir: f32) -> Option<(f32, f32, f32)> {
         let id = (x + y * (self.sx + 2.0)).floor() as usize;
 
-        if self.grid[id].computed == self.iter {
+        if (self.grid[id].computed - self.iter).abs() <= ERROR_MARGIN {
             return None;
         }
 
         let mut force: f32;
         let mut ms_case: f32 = 0.0;
-        let mut dir: f32 = if p_dir == -1.0 { 0.0 } else { p_dir };
+        let mut dir: f32 = if (p_dir - 1.0).abs() <= ERROR_MARGIN { 0.0 } else { p_dir };
 
         for i in 0..4 {
             let idn = (x + self.ix[i + 12]) + (y + self.ix[i + 16]) * (self.sx + 2.0);
@@ -154,13 +154,13 @@ impl LavaLamp {
             }
         }
 
-        if ms_case == 15.0 {
-            return Some((x, y - 1.0, -1.0));
+        if (ms_case - 15.0).abs() <= ERROR_MARGIN {
+            Some((x, y - 1.0, -1.0))
         } else {
-            if ms_case == 5.0 {
-                dir = if dir == 2.0 { 3.0 } else { 1.0 };
-            } else if ms_case == 10.0 {
-                dir = if dir == 3.0 { 0.0 } else { 2.0 };
+        if (ms_case - 5.0).abs() <= ERROR_MARGIN {
+                dir = if (dir - 2.0).abs() <= ERROR_MARGIN { 3.0 } else { 1.0 };
+            } else if (ms_case - 10.0).abs() <= ERROR_MARGIN {
+                dir = if (dir - 3.0).abs() <= ERROR_MARGIN { 0.0 } else { 2.0 };
             } else {
                 dir = self.mscases[ms_case as usize];
                 self.grid[id].computed = self.iter;
@@ -200,23 +200,22 @@ impl LavaLamp {
 
             self.ctx.line_to(lx, ly);
             self.paint = true;
-            let new_next = Some((
+
+            Some((
                 (x + self.ix[(dir + 4.0) as usize] as f32),
                 (y + self.ix[(dir + 8.0) as usize] as f32),
                 dir,
-            ));
+            ))
 
-            return new_next;
         }
     }
 
     pub fn render_metaball(&mut self) {
-        // self.ctx.clear_rect(0.0, 0.0, self.width as f64, self.height as f64);
         for ball in self.balls.iter_mut() {
             ball.mov();
         }
         self.iter += 1.0;
-        self.sign = -1.0 * self.sign;
+        self.sign *= -1.0;
         self.paint = false;
 
         self.ctx
@@ -225,9 +224,10 @@ impl LavaLamp {
 
         self.ctx.set_shadow_blur(50.0);
         self.ctx.set_shadow_color("black");
+        let mut next;
 
         for ball in self.balls.clone().iter() {
-            let mut next = Some((
+            next = Some((
                 (ball.pos.x / self.step).round(),
                 (ball.pos.y / self.step).round(),
                 -1.0,
@@ -240,20 +240,13 @@ impl LavaLamp {
                 }
             }
 
-            //let march = self.marching_squares(next.0, next.1, next.2);
-
             if self.paint {
                 self.ctx.fill();
-                // self.ctx.set_stroke_style(&JsValue::from("orange"));
-                // self.ctx.stroke();
                 self.ctx.close_path();
                 self.ctx.begin_path();
                 self.paint = false;
             }
         }
-
-        // self.ctx.set_fill_style(&JsValue::from("red"));
-        // self.ctx.fill_rect(0.0, 0.0, self.width as f64, self.height as f64);
     }
 }
 
@@ -294,10 +287,6 @@ impl Ball {
         let ry: f64 = rng.gen();
         let rx2: f64 = rng.gen();
         let ry2: f64 = rng.gen();
-        // let rx: f64 = 0.2;
-        // let ry: f64 = 0.2;
-        // let rx2: f64 = 0.2;
-        // let ry2: f64 = 0.2;
 
         let px = (if rx > 0.5f64 { 1.0f64 } else { -1.0f64 }) * (0.2 + rx2 * 0.25f64);
         let py = (if ry > 0.5f64 { 1.0f64 } else { -1.0f64 }) * (0.2 + ry);
@@ -333,24 +322,24 @@ impl Ball {
     fn mov(&mut self) {
         if self.pos.x >= (self.width - self.size) {
             if self.vel.x > 0.0 {
-                self.vel.x = -1.0 * self.vel.x;
+                self.vel.x *= -1.0;
             }
             self.pos.x = self.width - self.size;
         } else if self.pos.x <= self.size {
             if self.vel.x < 0.0 {
-                self.vel.x = -1.0 * self.vel.x;
+                self.vel.x *= -1.0;
             }
             self.pos.x = self.size;
         }
 
         if self.pos.y >= (self.height - self.size) {
             if self.vel.y > 0.0 {
-                self.vel.y = -1.0 * self.vel.y;
+                self.vel.y *= -1.0;
             }
             self.pos.y = self.height - self.size;
         } else if self.pos.y <= self.size {
             if self.vel.y < 0.0 {
-                self.vel.y = -1.0 * self.vel.y;
+                self.vel.y *= -1.0;
             }
             self.pos.y = self.size;
         }
@@ -385,13 +374,13 @@ fn create_radial_gradient(
         .create_radial_gradient(
             (w / 2.0) as f64,
             (h / 2.0) as f64,
-            0.0 as f64,
+            0.0_f64,
             (w / 2.0) as f64,
             (h / 2.0) as f64,
             (w / 2.0) as f64,
         )
         .unwrap();
-    gradient.add_color_stop(0.0, &c0);
-    gradient.add_color_stop(1.0, &c1);
+    gradient.add_color_stop(0.0, &c0).unwrap();
+    gradient.add_color_stop(1.0, &c1).unwrap();
     gradient
 }

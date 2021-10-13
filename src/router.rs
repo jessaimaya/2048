@@ -1,4 +1,8 @@
 use mogwai::prelude::*;
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use crate::containers::home::Home;
 
@@ -63,7 +67,7 @@ impl From<&Route> for ViewBuilder<HtmlElement> {
             Route::Home => {
                 let home_component = Gizmo::from(Home {
                     num_clicks: 1,
-                    ctx: None,
+                    ctx: Rc::new(RefCell::new(None)),
                 });
 
                 builder! {
