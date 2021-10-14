@@ -1,0 +1,62 @@
+use log::info;
+use mogwai::prelude::*;
+use wasm_bindgen::prelude::*;
+use web_sys::KeyboardEvent;
+
+use crate::router::Route;
+use crate::components::grid::*;
+
+
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+#[derive(Copy, Clone, Debug)]
+pub enum Move {
+    Up,
+    Left,
+    Down,
+    Right,
+}
+
+#[derive(Debug)]
+struct Play {
+    pub grid: Vec<Grid>,
+    pub last_move: Option<Move>,
+    pub game_over: bool,
+}
+
+#[derive(Clone)]
+enum PlayModelIn {
+    KeyUp(Option<Event>),
+    _Restart,
+    _Undo,
+}
+
+#[derive(Clone)]
+enum PlayViewOut {
+    Moved(Option<Move>, Grid),
+}
+
+impl Default for Play {
+    fn default() -> Self {
+        let mut grid: Grid = Grid { data: [[0;4]; 4]};
+        grid.add_random_2();
+
+        Play {
+            grid: vec![grid],
+            last_move: None,
+            game_over: false,
+        }
+    }
+}
+
+impl Component for Play {
+    type ModelMsg = PlayModelIn;
+    type ViewMsg = PlayViewOut;
+    type DomNode = HtmlElement;
+
+    fn update( &mut self, msg: &PlayModelIn, tx: &Transmitter<PlayViewOut>, _sub: &Subscriber<PlayModelIn> ) {
+
+    }
+}

@@ -4,6 +4,7 @@
 /************************************/
 .home {
     display: flex;
+    align-items: center;
     flex-direction: column;
     justify-content: center;
     align-content: center;
@@ -23,6 +24,19 @@
         justify-content: center;
         align-content: center;
     }
+    & .button {
+        margin-top: 8rem;
+    }
+}
+
+.black-screen {
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background: rgba(0,0,0,0.2);
 }
 
 .lavalamp_canvas {
@@ -57,16 +71,26 @@
         left: -1rem;
     }
     &.main {
-        left: 50%;
-        margin-left: -5rem;
+        top: 20%;
         text-align: center;
-        width: 10rem;
-        height: 10rem;
+        width: 25vh;
+        height: 25vh;
         color:#eef2f3;
         display: flex;
         flex-direction: column;
         align-content: center;
         justify-content: center;
+
+        box-shadow:
+            inset 0 0 5px #fff, 
+            inset 20px 0 80px #89CBD4, 
+            inset -20px 0 80px #44B3B3,
+            inset 20px 0 300px #89CBD4,
+            inset -20px 0 300px #44B3B3,
+            0 0 5px #fff,
+            -10px 0 80px #60bfbd,
+            10px 0 80px #44B3B3;
+
         h1, h2 {
             margin: 0;
             padding: 0;
@@ -104,6 +128,28 @@
     }
 }
 
+.button {
+    z-index: 1;
+    font-size: 1.1rem;
+    border-radius: 2rem;
+    padding: 0.5rem 3.5rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    border: none;
+    position: relative;
+    text-align: center;
 
-
+    &.green {
+        color: white;
+        box-shadow:
+            inset 0 0 5px #fff, 
+            inset 20px 0 80px #89CBD4, 
+            inset -20px 0 80px #44B3B3,
+            inset 20px 0 300px #89CBD4,
+            inset -20px 0 300px #44B3B3,
+            0 0 5px #fff,
+            -10px 0 80px #60bfbd,
+            10px 0 80px #44B3B3;
+    }
+}
 

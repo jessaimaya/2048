@@ -3,6 +3,7 @@ use log::Level;
 use mogwai::prelude::*;
 use std::panic;
 use wasm_bindgen::prelude::*;
+
 use web_sys::HashChangeEvent;
 
 mod components;
@@ -65,6 +66,7 @@ impl Component for App {
     fn update(&mut self, msg: &AppModel, tx: &Transmitter<AppView>, _sub: &Subscriber<AppModel>) {
         match msg {
             AppModel::HashChange(hash) => {
+                info!("route: {:?}", hash);
                 // When we get a hash change, attempt to convert it into one of our routes
                 match Route::try_from(hash.as_str()) {
                     // If we can't, let's send an error message to the view
@@ -106,7 +108,7 @@ impl Component for App {
                         </li>
                     </ul>
                 </nav>
-                <pre>{rx.branch_filter_map(AppView::error)}</pre>
+                <pre class="pre-error">{rx.branch_filter_map(AppView::error)}</pre>
                 {ViewBuilder::from(&self.route)}
             </slot>
         }

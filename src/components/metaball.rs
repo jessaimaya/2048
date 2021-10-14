@@ -106,8 +106,7 @@ impl LavaLamp {
             };
             let mut i = 0;
             while i < self.balls.len() {
-                let den = -2.0 * cell.x * self.balls[i].pos.x
-                    - 2.0 * cell.y * self.balls[i].pos.y
+                let den = -2.0 * cell.x * self.balls[i].pos.x - 2.0 * cell.y * self.balls[i].pos.y
                     + self.balls[i].pos.magnitude
                     + cell.magnitude;
 
@@ -135,7 +134,11 @@ impl LavaLamp {
 
         let mut force: f32;
         let mut ms_case: f32 = 0.0;
-        let mut dir: f32 = if (p_dir - 1.0).abs() <= ERROR_MARGIN { 0.0 } else { p_dir };
+        let mut dir: f32 = if (p_dir - 1.0).abs() <= ERROR_MARGIN {
+            0.0
+        } else {
+            p_dir
+        };
 
         for i in 0..4 {
             let idn = (x + self.ix[i + 12]) + (y + self.ix[i + 16]) * (self.sx + 2.0);
@@ -157,10 +160,18 @@ impl LavaLamp {
         if (ms_case - 15.0).abs() <= ERROR_MARGIN {
             Some((x, y - 1.0, -1.0))
         } else {
-        if (ms_case - 5.0).abs() <= ERROR_MARGIN {
-                dir = if (dir - 2.0).abs() <= ERROR_MARGIN { 3.0 } else { 1.0 };
+            if (ms_case - 5.0).abs() <= ERROR_MARGIN {
+                dir = if (dir - 2.0).abs() <= ERROR_MARGIN {
+                    3.0
+                } else {
+                    1.0
+                };
             } else if (ms_case - 10.0).abs() <= ERROR_MARGIN {
-                dir = if (dir - 3.0).abs() <= ERROR_MARGIN { 0.0 } else { 2.0 };
+                dir = if (dir - 3.0).abs() <= ERROR_MARGIN {
+                    0.0
+                } else {
+                    2.0
+                };
             } else {
                 dir = self.mscases[ms_case as usize];
                 self.grid[id].computed = self.iter;
@@ -206,7 +217,6 @@ impl LavaLamp {
                 (y + self.ix[(dir + 8.0) as usize] as f32),
                 dir,
             ))
-
         }
     }
 

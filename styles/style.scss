@@ -192,5 +192,16 @@ span {
 	}
 }
 
+nav {
+    top: 0;
+    right: 0;
+    z-index: 3;
+    position: absolute;
+}
+.pre-error {
+    top: 0;
+    left: 0;
+    position: absolute;
+}
 
 @import "home.scss";

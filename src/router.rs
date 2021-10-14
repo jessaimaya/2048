@@ -1,10 +1,8 @@
+use log::info;
 use mogwai::prelude::*;
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-};
 
 use crate::containers::home::Home;
+use crate::containers::play::Play;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Route {
@@ -43,6 +41,7 @@ impl TryFrom<&str> for Route {
 
         let paths: Vec<&str> = after_hash.split("/").collect::<Vec<_>>();
 
+        info!("pathss: {:?}, as_slice:{:?}", paths, paths.as_slice());
         match paths.as_slice() {
             [""] => Ok(Route::Home),
             ["", ""] => Ok(Route::Home),
@@ -65,10 +64,7 @@ impl From<&Route> for ViewBuilder<HtmlElement> {
     fn from(route: &Route) -> Self {
         match route {
             Route::Home => {
-                let home_component = Gizmo::from(Home {
-                    num_clicks: 1,
-                    ctx: Rc::new(RefCell::new(None)),
-                });
+                let home_component = Gizmo::from(Home { ctx: None });
 
                 builder! {
                     <main class="content">
@@ -76,10 +72,13 @@ impl From<&Route> for ViewBuilder<HtmlElement> {
                     </main>
                 }
             }
-            Route::Play => builder! {
-                <main>
-                    <h1>"Play!"</h1>
-                </main>
+            Route::Play => {
+                let play_component = Gizmo::from(Play::default());
+                builder! {
+                    <main class="content">
+                        {play_component.view_builder()}
+                    </main>
+                }
             },
         }
     }
