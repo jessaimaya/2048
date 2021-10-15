@@ -26,11 +26,11 @@ pub struct Play {
     pub game_over: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PlayModelIn {
     KeyUp(Option<Event>),
-    _Restart,
-    _Undo,
+    Restart,
+    Undo,
 }
 
 #[derive(Clone)]
@@ -96,9 +96,22 @@ impl Component for Play {
                             info!("GAME OVER");
                         }
                     }
-                }
-                Restart => (),
-                Undo => (),
+                },
+                PlayModelIn::Restart => {
+                    let new = Play::default();
+                    self.grid = new.grid;
+                    self.last_move = new.last_move;
+                    self.game_over = new.game_over;
+                    tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Default grid is empty").to_owned()))
+                },
+                &PlayModelIn::Undo => {
+                    if self.grid.len() > 1 {
+                        self.grid.pop().expect("Couldn't undo.");
+                        self.last_move = None;
+
+                        tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Couldn't complete undo.").to_owned()))
+                    }
+                },
                 _ => (),
             }
         }
@@ -119,7 +132,23 @@ impl Component for Play {
                 {render_board()}
                 {self.grid.last().expect("App grid empty").base_grid_view()}
             </main>
+            <div class="play__bottom">
+                <a 
+                    class="button green play undo"
+                    title="undo"
+                    on:click = tx.contra_map(|_| PlayModelIn::Undo)
+                >
+                    <span class="circle">"⭯"</span>
+                </a>
+                <a 
+                    title="restart"
+                    class=" button green play"
+                    on:click = tx.contra_map(|_| PlayModelIn::Restart)
+                >
+                    "Restart"
+                </a>
             </div>
+        </div>
         )
     }
 }

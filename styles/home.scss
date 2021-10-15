@@ -25,6 +25,8 @@
         align-content: center;
     }
     & .button {
+        bottom: 10rem;
+        position: absolute;
         margin-top: 8rem;
     }
 }
@@ -132,12 +134,16 @@
     z-index: 1;
     font-size: 1.1rem;
     border-radius: 2rem;
-    padding: 0.5rem 3.5rem;
+    padding: 0.7rem 3.5rem;
     text-decoration: none;
     text-transform: uppercase;
     border: none;
     position: relative;
     text-align: center;
+
+    &.undo {
+        padding: 0.8rem 1.1rem;
+    }
 
     &.green {
         color: white;
