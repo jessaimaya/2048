@@ -21,7 +21,7 @@ impl Component for Home {
     type ViewMsg = Out;
     type DomNode = HtmlElement;
 
-    fn update(&mut self, msg: &In, tx_view: &Transmitter<Out>, _sub: &Subscriber<In>) {
+    fn update(&mut self, msg: &In, _tx_view: &Transmitter<Out>, _sub: &Subscriber<In>) {
         match msg {
             In::CanvasIn(canvas) => {
                 let canvas = canvas
@@ -66,7 +66,7 @@ impl Component for Home {
         }
     }
 
-    fn view(&self, tx: &Transmitter<In>, rx: &Receiver<Out>) -> ViewBuilder<HtmlElement> {
+    fn view(&self, tx: &Transmitter<In>, _rx: &Receiver<Out>) -> ViewBuilder<HtmlElement> {
         let w = body().client_width() as usize;
         let h = window().inner_height().unwrap();
         builder! {

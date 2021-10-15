@@ -57,6 +57,8 @@ features = [
   "CanvasGradient",
   "CanvasRenderingContext2d",
   "Screen",
+  "PerformanceNavigation",
+  "Location",
 ]
 
 [dev-dependencies]
