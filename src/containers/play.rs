@@ -24,6 +24,10 @@ pub struct Play {
     pub grid: Vec<Grid>,
     pub last_move: Option<Move>,
     pub game_over: bool,
+    pub win: bool,
+    pub score: u32,
+    pub score_add: u16,
+    pub highest: u16,
 }
 
 #[derive(Clone, Debug)]
@@ -35,18 +39,27 @@ pub enum PlayModelIn {
 
 #[derive(Clone)]
 pub enum PlayViewOut {
-    Moved(Option<Move>, Grid),
+    Moved(Option<Move>, Grid, u32 ,u16, u16),
 }
 
 impl Default for Play {
     fn default() -> Self {
-        let mut grid: Grid = Grid { data: [[0;4]; 4]};
+        let mut grid: Grid = Grid {
+            data: [[0;4]; 4],
+            score: 0 ,
+            score_add: 0,
+            highest: 0,
+        };
         grid.add_random_2();
 
         Play {
             grid: vec![grid],
             last_move: None,
             game_over: false,
+            win: false,
+            score: 0,
+            score_add: 0,
+            highest: 0,
         }
     }
 }
@@ -69,17 +82,36 @@ impl Component for Play {
                     match key.as_ref() {
                         "ArrowUp" => {
                             self.last_move = Some(Move::Up);
-                            last.move_up();
+                            let mv = last.move_up();
+                            self.score += mv.0 as u32;
+                            self.score_add = mv.1;
+                            self.highest = mv.2;
+                            info!("mv_score:{}, res_score:{}", mv.0, self.score);
                         },
                         "ArrowDown" => {
                             self.last_move = Some(Move::Down);
-                            last.move_down();
+                            let mv = last.move_down();
+                            self.score += mv.0 as u32;
+                            self.score_add = mv.1;
+                            self.highest = mv.2;
+                            info!("mv_score:{}, res_score:{}", mv.0, self.score);
+
                         },"ArrowLeft" => {
                             self.last_move = Some(Move::Left);
-                            last.move_left();
+                            let mv = last.move_left();
+                            self.score += mv.0 as u32;
+                            self.score_add = mv.1;
+                            self.highest = mv.2;
+                            info!("mv_score:{}, res_score:{}", mv.0, self.score);
+
                         },"ArrowRight" => {
                             self.last_move = Some(Move::Right);
-                            last.move_right();
+                            let mv = last.move_right();
+                            self.score += mv.0 as u32;
+                            self.score_add = mv.1;
+                            self.highest = mv.2;
+                            info!("mv_score:{}, res_score:{}", mv.0, self.score);
+
                         },
                         _ => is_direction = false,
                     }
@@ -90,26 +122,32 @@ impl Component for Play {
                             // Check if we can move
                             last.add_random_2();
                             self.grid.push(last);
-                            tx.send(&PlayViewOut::Moved(self.last_move.clone(), last));
+                            tx.send(&PlayViewOut::Moved(self.last_move.clone(), last, self.score, self.score_add, self.highest));
                         } else if last.is_full() {
                             self.game_over = true;
                             info!("GAME OVER");
                         }
                     }
+
+                    if self.highest == 8 {
+                        // Win
+                        self.win = true;
+                        tx.send(&PlayViewOut::Moved(self.last_move.clone(), last, self.score, self.score_add, self.highest));
+}
                 },
                 PlayModelIn::Restart => {
                     let new = Play::default();
                     self.grid = new.grid;
                     self.last_move = new.last_move;
                     self.game_over = new.game_over;
-                    tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Default grid is empty").to_owned()))
+                    tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Default grid is empty").to_owned(), 0, 0, 0))
                 },
                 &PlayModelIn::Undo => {
                     if self.grid.len() > 1 {
                         self.grid.pop().expect("Couldn't undo.");
                         self.last_move = None;
-
-                        tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Couldn't complete undo.").to_owned()))
+                        self.score -= self.score_add as u32;
+                        tx.send(&PlayViewOut::Moved(self.last_move, self.grid.last().expect("Couldn't complete undo.").to_owned(), self.score, 0, self.highest))
                     }
                 },
                 _ => (),
@@ -118,14 +156,39 @@ impl Component for Play {
     }
 
         fn view (&self, tx: &Transmitter<PlayModelIn>, rx: &Receiver<PlayViewOut>) -> ViewBuilder<HtmlElement> {
+            // TODO: how to update if win == true
+            {if self.win {
+            
+                builder!(
+                    <div>"Win"</div>
+                    )
+
+            } else {
+
             builder!(
             <div
                 class="App"
                 tabindex="0"
                 on:keyup=tx.contra_map(|ev: &Event| PlayModelIn::KeyUp(Some(ev.clone())))
             >
+
+            <div class="play__top">
+                <h2>"Score"</h2>
+                <p class="score">
+                    {(
+                        "0",
+                        rx.branch_map(|msg| {
+                            match msg {
+                                PlayViewOut::Moved(_mov, _grid, score_add, score, _highest) => {
+                                    format!("{}", score_add.to_string())
+                                 }
+                            }
+                         })
+                    )}
+                </p>
+            </div>
             <main class="wrapper"
-                patch:children=rx.branch_map(|PlayViewOut::Moved(mov, grid)| {
+                patch:children=rx.branch_map(|PlayViewOut::Moved(mov, grid, _score, _score_add, _highest)| {
                     Patch::Replace{value: grid.base_grid_view(), index: 1}.clone()
                 })
             >
@@ -150,6 +213,8 @@ impl Component for Play {
             </div>
         </div>
         )
+
+            }}
     }
 }
 

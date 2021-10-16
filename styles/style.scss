@@ -94,6 +94,7 @@ html, body {
 	flex-direction: column;
 	justify-content: center;
 	align-content: center;
+    align-items: center;
 }
 
 .content {
@@ -107,6 +108,40 @@ html, body {
 	position: relative;
 	width: 320px;
 	height: 320px;
+}
+.play__top {
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    color: white;
+    font-size: 2rem;
+    padding: 1rem 10rem;
+    border-radius: 0 0 10rem 10rem;
+
+    box-shadow:
+    inset 0 0 5px #fff, 
+    inset 20px 0 80px #D1C8EA, 
+    inset -20px 0 80px #9199E2,
+    inset 20px 0 300px #D1C8EA,
+    inset -20px 0 300px #CFC0DC,
+    0 0 5px #fff,
+    -10px 0 80px #9199E2,
+    10px 0 80px #CFC0DC;
+
+
+    & h2{
+        font-weight: normal;
+        margin: 0;
+        margin: 0.2rem;
+        font-size: 2rem;
+    }
+
+    & .score {
+        font-size: 2.5rem;
+        margin: 0.5rem;
+        font-weight: bold;
+    }
 }
 .play__bottom {
     bottom: 2rem;
@@ -231,5 +266,7 @@ nav {
     left: 0;
     position: absolute;
 }
+
+
 
 @import "home.scss";

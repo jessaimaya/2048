@@ -8,6 +8,9 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 pub struct Grid {
     pub data: [[u16; 4]; 4],
+    pub score: u16,
+    pub score_add: u16,
+    pub highest: u16,
 }
 
 impl Grid {
@@ -22,27 +25,31 @@ impl Grid {
         self.data[rand_grid_point.0 as usize][rand_grid_point.1 as usize] = 2;
     }
 
-    pub fn move_up(&mut self) {
+    pub fn move_up(&mut self) -> (u16, u16, u16) {
         self.transpose();
         self.move_left();
         self.transpose();
+        (self.score, self.score_add, self.highest)
     }
 
-    pub fn move_left(&mut self) {
+    pub fn move_left(&mut self) -> (u16, u16, u16) {
         self.compress();
         self.merge();
         self.compress();
+        (self.score, self.score_add, self.highest)
     }
 
-    pub fn move_right(&mut self) {
+    pub fn move_right(&mut self) -> (u16, u16, u16) {
         self.reverse();
         self.move_left();
         self.reverse();
+        (self.score, self.score_add, self.highest)
     }
-    pub fn move_down(&mut self) {
+    pub fn move_down(&mut self) -> (u16, u16, u16) {
         self.transpose();
         self.move_right();
         self.transpose();
+        (self.score, self.score_add, self.highest)
     }
 
     pub fn transpose(&mut self) {
@@ -80,8 +87,15 @@ impl Grid {
         for i in 0..4 {
             for j in 0..3 {
                 if self.data[i][j] == self.data[i][j + 1] && self.data[i][j] != 0 {
-                    self.data[i][j] *= 2;
+                    let add = self.data[i][j] * 2;
+                    self.score_add = self.data[i][j];
+                    self.data[i][j] = add;
+                    self.score += add;
                     self.data[i][j + 1] = 0;
+
+                    if self.data[i][j] > self.highest {
+                        self.highest = self.data[i][j];
+                    }
                     changed = true;
                 }
             }
@@ -164,7 +178,7 @@ pub fn render_card(value: u16, col: u16, row: u16) -> ViewBuilder<HtmlElement> {
                     val = value.to_string(),
                     c = col,
                     r = row,
-                    small = if value > 512 { "small" } else if value > 64 { "medium" } else { "" }
+                    small = if value > 64 { "small" } else { "" }
                 )
             }
         >
