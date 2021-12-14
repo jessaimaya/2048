@@ -65,31 +65,38 @@ impl Component for App {
 
     fn bind(&self, input_sub: &Subscriber<AppModel>) {
         info!("BINDING");
-        let perf_nav = window().performance().expect("Performance not supported")
+        let perf_nav = window()
+            .performance()
+            .expect("Performance not supported")
             .navigation();
-        let hash = window().location().hash().expect("Error getting location hash");
+        let hash = window()
+            .location()
+            .hash()
+            .expect("Error getting location hash");
 
         info!("PerfNav: {}, hash:{}", perf_nav.type_(), hash);
- //        if perf_nav.type_() == web_sys::PerformanceNavigation::TYPE_RELOAD {
-            input_sub.send_async(async move {
-                AppModel::HashChange(hash)
-            });
-            //
-   //     }
-   
-         if perf_nav.type_() == web_sys::PerformanceNavigation::TYPE_BACK_FORWARD {
-             info!("BACKWARD!");
-         }
+        //        if perf_nav.type_() == web_sys::PerformanceNavigation::TYPE_RELOAD {
+        input_sub.send_async(async move { AppModel::HashChange(hash) });
+        //
+        //     }
+
+        if perf_nav.type_() == web_sys::PerformanceNavigation::TYPE_BACK_FORWARD {
+            info!("BACKWARD!");
+        }
     }
 
     fn update(&mut self, msg: &AppModel, tx: &Transmitter<AppView>, _sub: &Subscriber<AppModel>) {
         match msg {
             AppModel::HashChange(hash) => {
+                info!("route: {:?}", hash);
                 // When we get a hash change, attempt to convert it into one of our routes
 
                 if hash.is_empty() {
                     // Force empty hash
-                    window().location().set_hash("/").expect("Couldn't redirect to #/");
+                    window()
+                        .location()
+                        .set_hash("/")
+                        .expect("Couldn't redirect to #/");
                 }
 
                 match Route::try_from(hash.as_str()) {
@@ -98,6 +105,7 @@ impl Component for App {
                     // If we _can_, create a new view from the route and send a patch message to
                     // the view
                     Ok(route) => {
+                        window().focus().unwrap();
                         if route != self.route {
                             let view = View::from(ViewBuilder::from(&route));
                             self.route = route;

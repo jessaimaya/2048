@@ -157,4 +157,13 @@
             -10px 0 80px #60bfbd,
             10px 0 80px #44B3B3;
     }
+    &.back_home {
+        top: 1rem;
+        left: 1rem;
+        position: absolute;
+        padding: 0.8rem 1.1rem;
+        & span {
+            display: block;
+        }
+    }
 }

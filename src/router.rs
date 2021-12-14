@@ -79,7 +79,7 @@ impl From<&Route> for ViewBuilder<HtmlElement> {
                         {play_component.view_builder()}
                     </main>
                 }
-            },
+            }
         }
     }
 }
