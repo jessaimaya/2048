@@ -51,9 +51,7 @@ impl Default for Play {
             score_add: 0,
             highest: 0,
         };
-        // grid.add_random_2();
-        grid.data[0][0] = 1024;
-        grid.data[0][1] = 1024;
+        grid.add_random_2();
 
         Play {
             grid: vec![grid],
@@ -199,68 +197,68 @@ impl Component for Play {
     ) -> ViewBuilder<HtmlElement> {
         let loc_score = self.score;
         {
-                builder!(
-                    <div
-                        class="App"
-                        tabindex="0"
-                        on:keyup=tx.contra_map(|ev: &Event| PlayModelIn::KeyUp(Some(ev.clone())))
-                    >
-                    <a class="button green back_home" href="#/">
-                            <span class="circle">"←"</span>
-                    </a>
-                    <div class="play__top">
-                        <h2>"Score"</h2>
-                        <h3>{("", rx.branch_map(|msg| {
-                            match msg {
-                            PlayViewOut::Win => format!("WIN"),
-                            _ => format!("")
-                        }}))}</h3>
-                        <p class="score">
-                            {(
-                                "0",
-                                rx.branch_map(move |msg| {
-                                    match msg {
-                                        PlayViewOut::Moved(_mov, _grid, score_add, score, _highest) => {
-                                            format!("{}", score_add.to_string())
-                                         },
-                                         _ => format!("{}", loc_score.to_string())
-                                    }
-                                 })
-                            )}
-                        </p>
-                    </div>
-                    <main class="wrapper"
-                        patch:children=rx.branch_map(move |msg|{
-                            if let PlayViewOut::Moved(_mov, grid, _score, _score_add, _highest) = msg {
-                            Patch::Replace{value: grid.base_grid_view(), index: 1}.clone()
-                        } else {
-                            window().location().set_hash(&format!("#/win?sc={}", loc_score)).unwrap();
-                            Patch::RemoveAll
-                        }
-                        }
-                        )
-                    >
-                        {render_board()}
-                        {self.grid.last().expect("App grid empty").base_grid_view()}
-                    </main>
-                    <div class="play__bottom">
-                        <a
-                            class="button green play undo"
-                            title="undo"
-                            on:click = tx.contra_map(|_| PlayModelIn::Undo)
-                        >
-                            <span class="circle">"⭯"</span>
-                        </a>
-                        <a
-                            title="restart"
-                            class=" button green play"
-                            on:click = tx.contra_map(|_| PlayModelIn::Restart)
-                        >
-                            "Restart"
-                        </a>
-                    </div>
+            builder!(
+                <div
+                    class="App"
+                    tabindex="0"
+                    on:keyup=tx.contra_map(|ev: &Event| PlayModelIn::KeyUp(Some(ev.clone())))
+                >
+                <a class="button green back_home" href="#/">
+                        <span class="circle">"←"</span>
+                </a>
+                <div class="play__top">
+                    <h2>"Score"</h2>
+                    <h3>{("", rx.branch_map(|msg| {
+                        match msg {
+                        PlayViewOut::Win => format!("WIN"),
+                        _ => format!("")
+                    }}))}</h3>
+                    <p class="score">
+                        {(
+                            "0",
+                            rx.branch_map(move |msg| {
+                                match msg {
+                                    PlayViewOut::Moved(_mov, _grid, score_add, score, _highest) => {
+                                        format!("{}", score_add.to_string())
+                                     },
+                                     _ => format!("{}", loc_score.to_string())
+                                }
+                             })
+                        )}
+                    </p>
                 </div>
-                )
+                <main class="wrapper"
+                    patch:children=rx.branch_map(move |msg|{
+                        if let PlayViewOut::Moved(_mov, grid, _score, _score_add, _highest) = msg {
+                        Patch::Replace{value: grid.base_grid_view(), index: 1}.clone()
+                    } else {
+                        window().location().set_hash(&format!("#/win?sc={}", loc_score)).unwrap();
+                        Patch::RemoveAll
+                    }
+                    }
+                    )
+                >
+                    {render_board()}
+                    {self.grid.last().expect("App grid empty").base_grid_view()}
+                </main>
+                <div class="play__bottom">
+                    <a
+                        class="button green play undo"
+                        title="undo"
+                        on:click = tx.contra_map(|_| PlayModelIn::Undo)
+                    >
+                        <span class="circle">"⭯"</span>
+                    </a>
+                    <a
+                        title="restart"
+                        class=" button green play"
+                        on:click = tx.contra_map(|_| PlayModelIn::Restart)
+                    >
+                        "Restart"
+                    </a>
+                </div>
+            </div>
+            )
         }
     }
 }
